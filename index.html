@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Game Vault – Materials Tracker</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css"/>
+
+  <!-- ══ FIREBASE SDK ══ -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDuWgg1usIOCqpDdDx3fRmyT33VXP0w11M",
+  authDomain: "games-scouts-mogm3-2026.firebaseapp.com",
+  projectId: "games-scouts-mogm3-2026",
+  storageBucket: "games-scouts-mogm3-2026.firebasestorage.app",
+  messagingSenderId: "132628371993",
+  appId: "1:132628371993:web:aa31da2189689afe9b2888",
+  measurementId: "G-DMZ9BR338P"
+};
+
+const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // Expose helpers to app.js
+    window._db  = db;
+    window._col = () => collection(db, "entries");
+
+    window._addEntry = async (entry) => {
+      await addDoc(window._col(), { ...entry, createdAt: Date.now() });
+    };
+
+    window._deleteEntry = async (id) => {
+      await deleteDoc(doc(db, "entries", id));
+    };
+
+    // Real-time listener
+    const q = query(collection(db, "entries"), orderBy("createdAt", "desc"));
+    onSnapshot(q, (snap) => {
+      window._entries = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      if (window.renderList) window.renderList();
+    });
+  </script>
+</head>
+<body>
+
+  <header>
+    <div class="logo">🎮</div>
+    <div>
+      <h1>Game Vault</h1>
+      <p>Materials Tracker</p>
+    </div>
+    <div id="db-status">
+      <span id="db-dot"></span>
+      <span id="db-label">Connecting…</span>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- ── ADD FORM ── -->
+    <div class="card">
+      <div class="card-label">Add New Entry</div>
+
+      <div class="field">
+        <label for="inp-url">Video URL</label>
+        <input type="url" id="inp-url" placeholder="https://youtube.com/…" />
+      </div>
+
+      <div class="field" style="margin-top:14px;">
+        <label>Materials</label>
+        <div class="mat-row">
+          <div class="field"><input type="text" id="mat-name" placeholder="Cup, Rope, Ball…" /></div>
+          <div class="field"><input type="number" id="mat-count" placeholder="Qty" min="1" /></div>
+          <button class="btn-add" onclick="addChip()">+ Add</button>
+        </div>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <button class="btn-submit" onclick="submitEntry()">Save Entry</button>
+    </div>
+
+    <!-- ── STATS ── -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num" id="stat-entries">0</div>
+        <div class="stat-lbl">Entries</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-mats">0</div>
+        <div class="stat-lbl">Material Types</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-items">0</div>
+        <div class="stat-lbl">Total Items</div>
+      </div>
+    </div>
+
+    <!-- ── ENTRY LOG ── -->
+    <div class="card">
+      <div class="card-label">Entry Log</div>
+      <div id="list-container">
+        <div class="loader">Loading…</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- App Logic -->
+  <script src="app.js"></script>
+
+</body>
+</html>
